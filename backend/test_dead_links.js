@@ -1,15 +1,6 @@
-const mongoose = require("mongoose");
-const path = require("path");
-const dotenv = require("dotenv");
+const https = require('https');
+const http = require('http');
 
-// Load backend logic directly into DB
-dotenv.config({ path: path.join(__dirname, ".env") });
-
-const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ethereal_retail";
-const Product = require("./models/Product");
-
-// We natively establish exact image sources to guarantee categorical alignment.
 const fashion_datasets = {
   mens: {
     Topwear: [
@@ -23,16 +14,22 @@ const fashion_datasets = {
       "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=800&auto=format&fit=crop"
     ],
     Outerwear: [
+      "https://images.unsplash.com/photo-1520975954732-57dd22299614?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1521223830114-411a0c8b6bce?q=80&w=800&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop",
     ],
     Footwear: [
+      "https://cdn.dummyjson.com/product-images/mens-shoes/sport-sneakers/1.webp",
       "https://cdn.dummyjson.com/product-images/mens-shoes/puma-future-rider-trainers/1.webp",
+      "https://cdn.dummyjson.com/product-images/mens-shoes/casual-mens-brown-shoes/1.webp",
       "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=800&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=800&auto=format&fit=crop",
     ],
     Accessories: [
       "https://cdn.dummyjson.com/product-images/mens-watches/rolex-submariner-watch/1.webp",
       "https://cdn.dummyjson.com/product-images/mens-watches/brown-leather-belt-watch/1.webp",
+      "https://cdn.dummyjson.com/product-images/mens-watches/gold-rolex-watch/1.webp",
+      "https://cdn.dummyjson.com/product-images/sunglasses/glass-and-wood-sunglasses/1.webp",
       "https://images.unsplash.com/photo-1509048191080-d2984bad6ae5?q=80&w=800&auto=format&fit=crop",
     ],
   },
@@ -51,10 +48,12 @@ const fashion_datasets = {
       "https://cdn.dummyjson.com/product-images/womens-watches/rolex-cellini-moonphase/1.webp",
       "https://cdn.dummyjson.com/product-images/womens-bags/prada-women-bag/1.webp",
       "https://cdn.dummyjson.com/product-images/womens-bags/women-handbag-black/1.webp",
+      "https://cdn.dummyjson.com/product-images/womens-jewellery/gold-diamond-ring/1.webp",
       "https://images.unsplash.com/photo-1591561954557-26941169b49e?q=80&w=800&auto=format&fit=crop",
     ],
     Footwear: [
       "https://cdn.dummyjson.com/product-images/womens-shoes/calvin-klein-heel-shoes/1.webp",
+      "https://cdn.dummyjson.com/product-images/womens-shoes/white-style-women-shoes/1.webp",
       "https://images.unsplash.com/photo-1562183241-b937e95585b6?q=80&w=800&auto=format&fit=crop",
     ],
   },
@@ -68,52 +67,40 @@ const fashion_datasets = {
   },
 };
 
-const luxuryMaterials = ["Cashmere", "Silk", "Pima", "Calfskin", "Fine-Wool", "Tweed", "Architectural", "Linen", "Suede", "Organza"];
-const adjectives = ["Luxe", "Essential", "Minimalist", "Sculpted", "Fluid", "Heirloom", "Signature", "Limited", "Couture", "Ready-to-Wear"];
+const checkUrl = (url) => {
+  return new Promise((resolve) => {
+    const fn = url.startsWith('https') ? https : http;
+    fn.request(url, { method: 'HEAD' }, (res) => {
+      resolve({ url, status: res.statusCode });
+    }).on('error', () => {
+      resolve({ url, status: 500 });
+    }).end();
+  });
+};
 
-const generateUniqueProducts = () => {
-  const products = [];
-
-  // Map strictly 1-to-1 to ensure categories are EXACT and duplicates are 0.
-  for (const [genderKey, categoriesObj] of Object.entries(fashion_datasets)) {
-    const category = genderKey === "mens" ? "Men" : genderKey === "womens" ? "Women" : "Accessories";
-    let i = 0;
-    for (const [subCategory, imageUrls] of Object.entries(categoriesObj)) {
-      for (const imageUrl of imageUrls) {
-        const mat = luxuryMaterials[Math.floor(Math.random() * luxuryMaterials.length)];
-        const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-        const price = Math.floor(Math.random() * 2500) + 400;
-
-        products.push({
-          title: `Ethereal ${adj} ${mat} ${subCategory}`,
-          description: `A breathtaking masterpiece of ${subCategory} design. Crafted from premium ${mat} for an unparalleled aesthetic.`,
-          basePrice: price,
-          category: category,
-          subCategory: subCategory,
-          active: true,
-          isFeatured: i % 4 === 0,
-          brandHighlights: [`Premium ${mat}`, "Limited Release"],
-          images: [{ url: imageUrl, isPrimaryCover: true }],
-        });
-        i++;
+async function validateAndPrint() {
+  const allUrls = [];
+  for (const genderKey in fashion_datasets) {
+    for (const subCat in fashion_datasets[genderKey]) {
+      for (const url of fashion_datasets[genderKey][subCat]) {
+        allUrls.push(url);
       }
     }
   }
 
-  return products;
-};
-
-const seed = async () => {
-  try {
-    await mongoose.connect(MONGO_URI);
-    await Product.deleteMany({});
-    const finalSet = generateUniqueProducts();
-    await Product.insertMany(finalSet);
-    process.exit(0);
-  } catch (err) {
-    console.error(err);
-    process.exit(1);
+  const uniqueUrls = [...new Set(allUrls)];
+  console.log(`Checking ${uniqueUrls.length} unique URLs...`);
+  
+  const badUrls = [];
+  for (const url of uniqueUrls) {
+     const res = await checkUrl(url);
+     if (res.status >= 400 && res.status !== 403) {
+         badUrls.push({ url, status: res.status });
+     }
   }
-};
+  
+  console.log("BAD URLS FOUND:");
+  console.log(badUrls);
+}
 
-seed();
+validateAndPrint();
