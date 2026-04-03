@@ -95,38 +95,45 @@ const fashion_datasets = {
 const luxuryMaterials = ["Cashmere", "Silk", "Pima", "Calfskin", "Fine-Wool", "Tweed", "Architectural", "Linen", "Suede", "Organza"];
 const adjectives = ["Luxe", "Essential", "Minimalist", "Sculpted", "Fluid", "Heirloom", "Signature", "Limited", "Couture", "Ready-to-Wear"];
 
+  const categoriesDef = {
+    "Men": ["Topwear", "Bottomwear", "Outerwear", "Footwear", "Accessories"],
+    "Women": ["Dresses", "Topwear", "Bottomwear", "Outerwear", "Footwear", "Accessories"],
+    "Accessories": ["Accessories", "Watches", "Bags"]
+  };
+
+  const fs = require('fs');
+
   const generateUniqueProducts = () => {
     const products = [];
+    const validImages = JSON.parse(fs.readFileSync('./valid_images.json', 'utf-8'));
 
-    // Flatten the dataset into an accessible array of options
-    const flatOptions = [];
-    for (const [genderKey, categoriesObj] of Object.entries(fashion_datasets)) {
-      const category = genderKey === "mens" ? "Men" : genderKey === "womens" ? "Women" : "Accessories";
-      for (const [subCategory, imageUrls] of Object.entries(categoriesObj)) {
-        for (const imageUrl of imageUrls) {
-          flatOptions.push({ category, subCategory, imageUrl });
-        }
-      }
-    }
-
-    // Map strictly 1-to-1 with no repetition algorithm
-    flatOptions.forEach((option, i) => {
+    validImages.forEach((imgUrl, i) => {
       const mat = luxuryMaterials[Math.floor(Math.random() * luxuryMaterials.length)];
       const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
       const price = Math.floor(Math.random() * 2500) + 400;
 
+      const categoryKeys = Object.keys(categoriesDef);
+      const cat = categoryKeys[Math.floor(Math.random() * categoryKeys.length)];
+      const subCatOptions = categoriesDef[cat];
+      const subCat = subCatOptions[Math.floor(Math.random() * subCatOptions.length)];
+
       products.push({
-        title: `Ethereal ${adj} ${mat} ${option.subCategory}`,
-        description: `A breathtaking masterpiece of ${option.subCategory} design. Crafted from premium ${mat} for an unparalleled aesthetic.`,
+        title: `Ethereal ${adj} ${mat} ${subCat}`,
+        description: `A breathtaking masterpiece of ${subCat} design. Crafted from premium ${mat} for an unparalleled aesthetic.`,
         basePrice: price,
-        category: option.category,
-        subCategory: option.subCategory,
+        category: cat,
+        subCategory: subCat,
         active: true,
         isFeatured: i % 8 === 0,
         brandHighlights: [`Premium ${mat}`, "Limited Release"],
-        images: [{ url: option.imageUrl, isPrimaryCover: true }],
+        images: [{ url: imgUrl, isPrimaryCover: true }],
       });
     });
+
+    for (let k = products.length - 1; k > 0; k--) {
+      const j = Math.floor(Math.random() * (k + 1));
+      [products[k], products[j]] = [products[j], products[k]];
+    }
 
     return products;
   };
