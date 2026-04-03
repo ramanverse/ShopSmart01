@@ -72,6 +72,7 @@ const Catalog = ({ setCartCount }) => {
   ];
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
     let queryParams = new URLSearchParams();
     if (filters.category !== "All")
@@ -88,6 +89,7 @@ const Catalog = ({ setCartCount }) => {
     api
       .get(`/products?${queryParams.toString()}`)
       .then((res) => {
+        if (!active) return;
         if (res.data.success) {
           const newProducts = res.data.data;
           if (filters.page === 1) {
@@ -105,9 +107,14 @@ const Catalog = ({ setCartCount }) => {
         setLoading(false);
       })
       .catch((err) => {
+        if (!active) return;
         toast.error("Failed to fetch collection");
         setLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [filters]);
 
   const handleAddToCart = (productId) => {
