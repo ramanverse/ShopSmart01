@@ -26,7 +26,6 @@ const Auth = () => {
         localStorage.setItem("ethereal_user", JSON.stringify(res.data.user));
         toast.success(res.data.message, { theme: "dark", icon: "🗝️" });
         navigate("/profile");
-        window.location.reload();
       }
     } catch (err) {
       toast.error(
