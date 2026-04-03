@@ -4,6 +4,9 @@
 
 > Nature, distilled. A full-stack, end-to-end e-commerce concept optimizing the digital storefront experience through sophisticated Mongoose schemas, programmatic algorithmic data filtering, and a bespoke "Bento Grid" React user interface.
 
+### 🌐 Live Deployment & Source Code
+*   **Live Application**: [https://ethereal-retail.vercel.app](https://ethereal-retail.vercel.app)
+*   **GitHub Repository**: [https://github.com/Abhi3975/EtherealRetail](https://github.com/Abhi3975/EtherealRetail)
 ## 🌟 Elite Architecture Features
 
 - **Advanced Database Aggregation**: Uses deeply nested MongoDB/$group pipelines inside the `/api/analytics` routes to instantly render Admin KPIs.
