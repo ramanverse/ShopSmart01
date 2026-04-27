@@ -24,22 +24,21 @@
 
 ## 🚀 Getting Started
 
-The platform utilizes a multi-stage deterministic Docker image for identical deployment behavior.
+To run the application locally, follow these steps:
 
-```bash
-# Bring up the MongoDB service and the backend seamlessly
-docker-compose up -d
+1. **Backend Setup**:
+   - Navigate to the `backend` directory.
+   - Install dependencies: `npm install`
+   - Create a `.env` file with your `MONGO_URI` and `JWT_SECRET`.
+   - Start the server: `node server.js`
 
-# Spin up the development frontend separately
-cd frontend
-npm run dev
-```
+2. **Frontend Setup**:
+   - Navigate to the `frontend` directory.
+   - Install dependencies: `npm install`
+   - Start the development server: `npm run dev`
 
-### Manual Mode
-If you prefer not to use the orchestrated containers:
-1. Fire up a local `mongod` process or inject a `.env` `MONGO_URI`.
-2. `cd backend && npm install && node server.js`
-3. `cd frontend && npm install && npm run dev`
+3. **Database Seeding (Optional)**:
+   - Run `node seed.js` in the `backend` directory to populate the database with initial products.
 
 ---
 *Built meticulously for an obsessive approach to digital retail.*

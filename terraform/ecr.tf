@@ -1,7 +1,3 @@
-# ─────────────────────────────────────────────
-# ECR Repositories
-# ─────────────────────────────────────────────
-
 resource "aws_ecr_repository" "backend" {
   name                 = "${var.project_name}-backend"
   image_tag_mutability = "MUTABLE"
@@ -10,8 +6,6 @@ resource "aws_ecr_repository" "backend" {
   image_scanning_configuration {
     scan_on_push = true
   }
-
-  tags = { Name = "${var.project_name}-backend" }
 }
 
 resource "aws_ecr_repository" "frontend" {
@@ -22,29 +16,12 @@ resource "aws_ecr_repository" "frontend" {
   image_scanning_configuration {
     scan_on_push = true
   }
-
-  tags = { Name = "${var.project_name}-frontend" }
 }
 
-# ── Lifecycle Policy: keep only the last 5 images ──
-resource "aws_ecr_lifecycle_policy" "backend" {
-  repository = aws_ecr_repository.backend.name
-  policy = jsonencode({
-    rules = [{
-      rulePriority = 1
-      description  = "Keep last 5 images"
-      selection = {
-        tagStatus   = "any"
-        countType   = "imageCountMoreThan"
-        countNumber = 5
-      }
-      action = { type = "expire" }
-    }]
-  })
-}
+resource "aws_ecr_lifecycle_policy" "cleanup" {
+  for_each   = toset([aws_ecr_repository.backend.name, aws_ecr_repository.frontend.name])
+  repository = each.value
 
-resource "aws_ecr_lifecycle_policy" "frontend" {
-  repository = aws_ecr_repository.frontend.name
   policy = jsonencode({
     rules = [{
       rulePriority = 1
